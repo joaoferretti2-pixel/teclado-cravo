@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Teclado de Cravo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: linear-gradient(180deg, #2a1810 0%, #1a0e08 100%);
+    color: #e8d4a0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    user-select: none;
+  }
+  h1 {
+    font-size: 28px;
+    margin-bottom: 6px;
+    color: #d4af6a;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    letter-spacing: 2px;
+  }
+  .subtitle {
+    font-style: italic;
+    color: #a89070;
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+  .controls {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,0,0,0.3);
+    padding: 8px 14px;
+    border: 1px solid #5a3a20;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .control label {
+    color: #c4a070;
+  }
+  button {
+    background: linear-gradient(180deg, #5a3a20, #3a2410);
+    color: #e8d4a0;
+    border: 1px solid #6a4a30;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-family: inherit;
+    border-radius: 3px;
+    font-size: 13px;
+  }
+  button:hover { background: linear-gradient(180deg, #6a4a30, #4a3420); }
+  button.active { background: linear-gradient(180deg, #8a6a40, #6a4a30); box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
+  input[type="range"] { width: 100px; }
+  select {
+    background: #2a1810;
+    color: #e8d4a0;
+    border: 1px solid #5a3a20;
+    padding: 4px;
+    font-family: inherit;
+  }
+
+  .keyboard-frame {
+    background: linear-gradient(180deg, #4a2a14, #2a1808);
+    padding: 20px 24px 28px;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.7), inset 0 2px 4px rgba(255,200,140,0.1);
+    border: 2px solid #6a4020;
+    position: relative;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  .keyboard {
+    position: relative;
+    display: flex;
+    height: 220px;
+  }
+  .white-key {
+    width: 48px;
+    height: 220px;
+    background: linear-gradient(180deg, #faf3e0 0%, #f0e4c8 80%, #e0d0a8 100%);
+    border: 1px solid #8a6a40;
+    border-radius: 0 0 4px 4px;
+    margin-right: -1px;
+    position: relative;
+    cursor: pointer;
+    box-shadow:
+      inset 0 -3px 6px rgba(120,80,40,0.3),
+      0 2px 3px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 8px;
+    transition: background 0.05s, transform 0.05s;
+  }
+  .white-key:hover { background: linear-gradient(180deg, #fff8e8, #f5e9d0); }
+  .white-key.pressed {
+    background: linear-gradient(180deg, #d8c298, #c8b288);
+    transform: translateY(2px);
+    box-shadow:
+      inset 0 4px 8px rgba(80,50,20,0.5),
+      0 1px 1px rgba(0,0,0,0.4);
+  }
+  .black-key {
+    width: 30px;
+    height: 140px;
+    background: linear-gradient(180deg, #1a0e04 0%, #2a1808 50%, #0a0402 100%);
+    border: 1px solid #000;
+    border-radius: 0 0 3px 3px;
+    position: absolute;
+    top: 0;
+    z-index: 2;
+    cursor: pointer;
+    box-shadow:
+      inset 0 -4px 6px rgba(180,140,80,0.15),
+      inset 0 2px 3px rgba(255,220,160,0.1),
+      0 3px 5px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 6px;
+    transition: background 0.05s, transform 0.05s, box-shadow 0.05s;
+  }
+  .black-key:hover { background: linear-gradient(180deg, #2a1808, #3a2410 50%, #1a0e04); }
+  .black-key.pressed {
+    background: linear-gradient(180deg, #0a0402, #1a0e04);
+    transform: translateY(2px);
+    box-shadow:
+      inset 0 4px 8px rgba(0,0,0,0.8),
+      0 1px 2px rgba(0,0,0,0.4);
+  }
+
+  .key-label {
+    font-size: 10px;
+    color: #8a6a40;
+    font-family: 'Courier New', monospace;
+  }
+  .black-key .key-label { color: #b8985a; }
+  .note-label {
+    font-size: 9px;
+    color: #6a4a20;
+    margin-top: 2px;
+  }
+  .black-key .note-label { color: #8a7050; }
+
+  .legend {
+    margin-top: 24px;
+    text-align: center;
+    color: #a89070;
+    font-size: 13px;
+    line-height: 1.7;
+    max-width: 700px;
+  }
+  .legend code {
+    background: rgba(0,0,0,0.4);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: #e8d4a0;
+    font-family: 'Courier New', monospace;
+  }
+
+  .ornament {
+    position: absolute;
+    top: 4px;
+    color: #8a6a40;
+    font-size: 14px;
+    font-style: italic;
+  }
+  .ornament-left { left: 12px; }
+  .ornament-right { right: 12px; }
+
+  .now-playing {
+    margin-top: 12px;
+    height: 20px;
+    color: #d4af6a;
+    font-style: italic;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+  <h1>~ CRAVO ~</h1>
+  <div class="subtitle">Clavicembalo · Harpsichord</div>
+
+  <div class="controls">
+    <div class="control">
+      <label>Volume:</label>
+      <input type="range" id="volume" min="0" max="100" value="60">
+    </div>
+    <div class="control">
+      <label>Registro:</label>
+      <select id="register">
+        <option value="8">8' (normal)</option>
+        <option value="4">4' (oitava acima)</option>
+        <option value="both" selected>8' + 4' (acoplado)</option>
+        <option value="lute">Alaúde (abafado)</option>
+      </select>
+    </div>
+    <div class="control">
+      <label>Oitava:</label>
+      <button id="octaveDown">−</button>
+      <span id="octaveLabel">C4</span>
+      <button id="octaveUp">+</button>
+    </div>
+    <button id="sustainBtn">Sustain (espaço)</button>
+  </div>
+
+  <div class="keyboard-frame">
+    <span class="ornament ornament-left">✦</span>
+    <span class="ornament ornament-right">✦</span>
+    <div class="keyboard" id="keyboard"></div>
+  </div>
+
+  <div class="now-playing" id="nowPlaying">&nbsp;</div>
+
+  <div class="legend">
+    Use o mouse ou as teclas do computador. Linha de baixo: <code>Z X C V B N M , . /</code> (teclas brancas) ·
+    <code>S D G H J L ;</code> (teclas pretas). Linha de cima: <code>Q W E R T Y U I O P</code> (uma oitava acima).
+    <br>Use <code>+</code> e <code>−</code> para mudar de oitava. Espaço para sustain.
+  </div>
+
+<script>
+let audioCtx;
+let masterGain;
+const activeNotes = new Map();
+let octaveShift = 0;
+let sustainPedal = false;
+const sustainedNodes = [];
+
+// Notes: 3 octaves visible at a time, ranging across keyboard
+const NOTES = [];
+const noteNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+// Build 3 octaves starting from C3
+for (let oct = 3; oct <= 5; oct++) {
+  for (let i = 0; i < 12; i++) {
+    NOTES.push({ name: noteNames[i], octave: oct, midi: 12*(oct+1)+i });
+  }
+}
+// Add final C
+NOTES.push({ name: 'C', octave: 6, midi: 12*7 });
+
+function midiToFreq(midi) {
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+// Harpsichord-like synthesis: plucked, bright, rapid decay, no sustain
+function playNote(midi) {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = parseFloat(document.getElementById('volume').value) / 100;
+    masterGain.connect(audioCtx.destination);
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const register = document.getElementById('register').value;
+  const now = audioCtx.currentTime;
+  const freq = midiToFreq(midi);
+
+  const noteGain = audioCtx.createGain();
+  noteGain.connect(masterGain);
+
+  // Frequencies depending on register
+  const voices = [];
+  if (register === '8' || register === 'both' || register === 'lute') voices.push(freq);
+  if (register === '4' || register === 'both') voices.push(freq * 2); // 4' is octave higher
+
+  const isLute = register === 'lute';
+  const decayTime = isLute ? 0.6 : 1.8;
+  const peakLevel = isLute ? 0.18 : 0.28;
+
+  voices.forEach((f, idx) => {
+    // Multiple oscillators per voice for richness — sawtooth + square + slight detune
+    const oscTypes = [
+      { type: 'sawtooth', detune: 0,    level: 0.6 },
+      { type: 'square',   detune: -3,   level: 0.25 },
+      { type: 'triangle', detune: 4,    level: 0.5 }
+    ];
+    const voiceGain = audioCtx.createGain();
+    // Quill pluck attack: extremely fast attack, fast initial decay, slow tail
+    voiceGain.gain.setValueAtTime(0.0001, now);
+    voiceGain.gain.exponentialRampToValueAtTime(peakLevel * (idx === 0 ? 1 : 0.45), now + 0.005);
+    voiceGain.gain.exponentialRampToValueAtTime(peakLevel * 0.3, now + 0.08);
+    voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + decayTime);
+
+    // Filter to shape the bright but not harsh harpsichord timbre
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(isLute ? 1800 : 6000, now);
+    filter.frequency.exponentialRampToValueAtTime(isLute ? 600 : 1500, now + decayTime);
+    filter.Q.value = 1.2;
+
+    const hp = audioCtx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 120;
+
+    voiceGain.connect(filter);
+    filter.connect(hp);
+    hp.connect(noteGain);
+
+    oscTypes.forEach(o => {
+      const osc = audioCtx.createOscillator();
+      osc.type = o.type;
+      osc.frequency.value = f;
+      osc.detune.value = o.detune;
+      const oGain = audioCtx.createGain();
+      oGain.gain.value = o.level;
+      osc.connect(oGain);
+      oGain.connect(voiceGain);
+      osc.start(now);
+      osc.stop(now + decayTime + 0.1);
+    });
+
+    // Pluck noise burst — the characteristic "click" of the quill
+    const noiseDur = 0.03;
+    const noiseBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * noiseDur, audioCtx.sampleRate);
+    const noiseData = noiseBuf.getChannelData(0);
+    for (let i = 0; i < noiseData.length; i++) {
+      noiseData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / noiseData.length, 2);
+    }
+    const noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = noiseBuf;
+    const noiseFilter = audioCtx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.value = f * 4;
+    noiseFilter.Q.value = 2;
+    const noiseGain = audioCtx.createGain();
+    noiseGain.gain.value = 0.08;
+    noiseSource.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(noteGain);
+    noiseSource.start(now);
+    noiseSource.stop(now + noiseDur);
+  });
+
+  return { noteGain, startTime: now, decayTime };
+}
+
+function releaseNote(noteObj) {
+  if (!noteObj) return;
+  const { noteGain } = noteObj;
+  // Damper effect: quick fade when released (unless sustain pedal is on)
+  if (sustainPedal) {
+    sustainedNodes.push(noteObj);
+    return;
+  }
+  const now = audioCtx.currentTime;
+  noteGain.gain.cancelScheduledValues(now);
+  noteGain.gain.setValueAtTime(noteGain.gain.value, now);
+  noteGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+  setTimeout(() => { try { noteGain.disconnect(); } catch(e){} }, 200);
+}
+
+// Build keyboard
+const keyboardEl = document.getElementById('keyboard');
+const keyMapBottom = ['z','s','x','d','c','v','g','b','h','n','j','m',',','l','.',';','/'];
+const keyMapTop    = ['q','2','w','3','e','r','5','t','6','y','7','u','i','9','o','0','p'];
+
+function buildKeyboard() {
+  keyboardEl.innerHTML = '';
+  // first 17 notes (C3 to E4 for visual), but we'll show 22 white keys ≈ 3 octaves + 1
+  const visibleNotes = NOTES.slice(0, 25); // C3 through C5
+  let whiteIndex = 0;
+  // Render white keys first
+  visibleNotes.forEach((note) => {
+    if (!note.name.includes('#')) {
+      const key = document.createElement('div');
+      key.className = 'white-key';
+      key.dataset.midi = note.midi;
+      const keyMapIdx = whiteIndex - 7; // start mapping around C4
+      const noteLbl = document.createElement('div');
+      noteLbl.className = 'note-label';
+      noteLbl.textContent = note.name + note.octave;
+      key.appendChild(noteLbl);
+      keyboardEl.appendChild(key);
+      whiteIndex++;
+    }
+  });
+  // Position black keys
+  const whiteKeys = keyboardEl.querySelectorAll('.white-key');
+  let wIdx = 0;
+  visibleNotes.forEach((note) => {
+    if (note.name.includes('#')) {
+      const key = document.createElement('div');
+      key.className = 'black-key';
+      key.dataset.midi = note.midi;
+      // Position: between current white key (wIdx-1) and next
+      const leftWhite = whiteKeys[wIdx - 1];
+      if (leftWhite) {
+        const left = leftWhite.offsetLeft + leftWhite.offsetWidth - 15;
+        key.style.left = left + 'px';
+      }
+      const noteLbl = document.createElement('div');
+      noteLbl.className = 'note-label';
+      noteLbl.textContent = note.name.replace('#','♯');
+      key.appendChild(noteLbl);
+      keyboardEl.appendChild(key);
+    } else {
+      wIdx++;
+    }
+  });
+
+  // Assign keyboard shortcuts based on octaveShift
+  assignShortcuts();
+  // Bind mouse events
+  keyboardEl.querySelectorAll('.white-key, .black-key').forEach(k => {
+    k.addEventListener('mousedown', e => {
+      e.preventDefault();
+      const midi = parseInt(k.dataset.midi);
+      pressKey(midi, k);
+    });
+    k.addEventListener('mouseup', e => {
+      const midi = parseInt(k.dataset.midi);
+      releaseKey(midi, k);
+    });
+    k.addEventListener('mouseleave', e => {
+      const midi = parseInt(k.dataset.midi);
+      if (activeNotes.has(midi)) releaseKey(midi, k);
+    });
+    k.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const midi = parseInt(k.dataset.midi);
+      pressKey(midi, k);
+    });
+    k.addEventListener('touchend', e => {
+      e.preventDefault();
+      const midi = parseInt(k.dataset.midi);
+      releaseKey(midi, k);
+    });
+  });
+}
+
+const keyboardMap = new Map(); // computer key -> midi
+function assignShortcuts() {
+  keyboardMap.clear();
+  // Bottom row: 17 chromatic notes starting at C(4 + octaveShift)
+  const baseBottom = 12 * (4 + octaveShift + 1); // MIDI C4 = 60
+  const bottomKeys = ['z','s','x','d','c','v','g','b','h','n','j','m',',','l','.',';','/'];
+  bottomKeys.forEach((k, i) => {
+    keyboardMap.set(k, baseBottom + i);
+  });
+  // Top row: 17 chromatic notes starting an octave above
+  const baseTop = baseBottom + 12;
+  const topKeys = ['q','2','w','3','e','r','5','t','6','y','7','u','i','9','o','0','p'];
+  topKeys.forEach((k, i) => {
+    keyboardMap.set(k, baseTop + i);
+  });
+
+  // Add labels to visible keys
+  document.querySelectorAll('.key-label').forEach(el => el.remove());
+  document.querySelectorAll('.white-key, .black-key').forEach(keyEl => {
+    const midi = parseInt(keyEl.dataset.midi);
+    const computerKey = [...keyboardMap.entries()].find(([k,v]) => v === midi);
+    if (computerKey) {
+      const lbl = document.createElement('div');
+      lbl.className = 'key-label';
+      lbl.textContent = computerKey[0].toUpperCase();
+      keyEl.insertBefore(lbl, keyEl.firstChild);
+    }
+  });
+  document.getElementById('octaveLabel').textContent = 'C' + (4 + octaveShift);
+}
+
+function findKeyEl(midi) {
+  return keyboardEl.querySelector(`[data-midi="${midi}"]`);
+}
+
+function pressKey(midi, keyEl) {
+  if (activeNotes.has(midi)) return;
+  if (!keyEl) keyEl = findKeyEl(midi);
+  if (keyEl) keyEl.classList.add('pressed');
+  const noteObj = playNote(midi);
+  activeNotes.set(midi, noteObj);
+  // Show note name
+  const noteName = noteNames[midi % 12] + (Math.floor(midi/12) - 1);
+  document.getElementById('nowPlaying').textContent = '♪ ' + noteName;
+}
+
+function releaseKey(midi, keyEl) {
+  const noteObj = activeNotes.get(midi);
+  if (!noteObj) return;
+  if (!keyEl) keyEl = findKeyEl(midi);
+  if (keyEl) keyEl.classList.remove('pressed');
+  releaseNote(noteObj);
+  activeNotes.delete(midi);
+}
+
+// Computer keyboard input
+document.addEventListener('keydown', e => {
+  if (e.repeat) return;
+  const k = e.key.toLowerCase();
+  if (k === ' ') {
+    e.preventDefault();
+    sustainPedal = true;
+    document.getElementById('sustainBtn').classList.add('active');
+    return;
+  }
+  if (k === '+' || k === '=') { changeOctave(1); return; }
+  if (k === '-' || k === '_') { changeOctave(-1); return; }
+  if (keyboardMap.has(k)) {
+    e.preventDefault();
+    pressKey(keyboardMap.get(k));
+  }
+});
+document.addEventListener('keyup', e => {
+  const k = e.key.toLowerCase();
+  if (k === ' ') {
+    sustainPedal = false;
+    document.getElementById('sustainBtn').classList.remove('active');
+    // Release all sustained notes
+    sustainedNodes.forEach(noteObj => {
+      const now = audioCtx.currentTime;
+      noteObj.noteGain.gain.cancelScheduledValues(now);
+      noteObj.noteGain.gain.setValueAtTime(noteObj.noteGain.gain.value, now);
+      noteObj.noteGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+    });
+    sustainedNodes.length = 0;
+    return;
+  }
+  if (keyboardMap.has(k)) {
+    releaseKey(keyboardMap.get(k));
+  }
+});
+
+function changeOctave(delta) {
+  octaveShift = Math.max(-2, Math.min(2, octaveShift + delta));
+  assignShortcuts();
+}
+
+document.getElementById('octaveUp').addEventListener('click', () => changeOctave(1));
+document.getElementById('octaveDown').addEventListener('click', () => changeOctave(-1));
+document.getElementById('sustainBtn').addEventListener('mousedown', () => {
+  sustainPedal = true;
+  document.getElementById('sustainBtn').classList.add('active');
+});
+document.getElementById('sustainBtn').addEventListener('mouseup', () => {
+  sustainPedal = false;
+  document.getElementById('sustainBtn').classList.remove('active');
+  if (audioCtx) {
+    sustainedNodes.forEach(noteObj => {
+      const now = audioCtx.currentTime;
+      noteObj.noteGain.gain.cancelScheduledValues(now);
+      noteObj.noteGain.gain.setValueAtTime(noteObj.noteGain.gain.value, now);
+      noteObj.noteGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+    });
+    sustainedNodes.length = 0;
+  }
+});
+document.getElementById('volume').addEventListener('input', e => {
+  if (masterGain) masterGain.gain.value = parseFloat(e.target.value) / 100;
+});
+
+buildKeyboard();
+</script>
+</body>
+</html>
